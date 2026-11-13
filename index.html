@@ -1,0 +1,1287 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-nestle-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>栖迟 Nestle · 把一家人的饭，记在一本手账里</title>
+<meta name="description" content="栖迟 Nestle 是一套跑在自家局域网里的家庭食谱与备忘系统：Memos、食刻、订单与购物清单。Android + Windows，PocketBase 自托管，开源可自建。">
+<meta name="theme-color" content="#FAF5EE">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23FAF5EE'/%3E%3Cg fill='none' stroke='%2326201B' stroke-linecap='round'%3E%3Cpath d='M12 18h40' stroke-width='5'/%3E%3Cpath d='M20 18v32M44 18v32' stroke-width='4'/%3E%3C/g%3E%3Cpath d='M26 28h12v9a6 6 0 0 1-12 0z' fill='%23B45B3E'/%3E%3Cpath d='M32 24v4M32 43v5' stroke='%2326201B' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+<script>
+(function(){
+  var t = 'light';
+  try { t = localStorage.getItem('nestle-theme') || 'light'; } catch (e) {}
+  document.documentElement.setAttribute('data-nestle-theme', t);
+  document.documentElement.classList.add('js');
+})();
+</script>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.7.0/lxgwwenkaiscreen.css">
+<style>
+  /* ============ 设计变量 ============ */
+  :root{
+    --paper:#FAF5EE;
+    --surface:#FFFCF7;
+    --ink:#26201B;
+    --muted:#7B6B5D;
+    --line:#E7DACE;
+    --accent:#B45B3E;
+    --accent-press:#9C4B31;
+    --olive:#6C8164;
+    --gold:#B3893F;
+    --danger:#B0453F;
+    --success:#4F7D5B;
+    --wash:#F2E9DD;
+    --shade:rgba(38,32,27,.08);
+    --serif:"LXGW WenKai Screen","Source Han Serif SC","Noto Serif SC","Songti SC",STSong,SimSun,serif;
+    --sans:"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",sans-serif;
+    --mono:"SFMono-Regular","Cascadia Mono",Consolas,"Liberation Mono",monospace;
+  }
+  html[data-nestle-theme="dark"]{
+    --paper:#15120F;
+    --surface:#1D1915;
+    --ink:#F1E8DE;
+    --muted:#A99A8C;
+    --line:#332B25;
+    --accent:#D97B5C;
+    --accent-press:#C4674A;
+    --olive:#8FA487;
+    --gold:#C9A15C;
+    --danger:#D46A63;
+    --success:#7FA98A;
+    --wash:#241F1A;
+    --shade:rgba(0,0,0,.34);
+    color-scheme:dark;
+  }
+
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  @media (prefers-reduced-motion:reduce){ html{scroll-behavior:auto} }
+  body{
+    margin:0;background:var(--paper);color:var(--ink);
+    font-family:var(--sans);font-size:15px;line-height:1.75;
+    -webkit-font-smoothing:antialiased;overflow-x:hidden;
+  }
+  img{display:block;max-width:100%}
+  a{color:inherit;text-decoration:none}
+  button{font-family:inherit;cursor:pointer}
+  h1,h2,h3,h4,p{margin:0}
+  ::selection{background:var(--accent);color:#FFF8F0}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+
+  .wrap{width:min(1160px,calc(100% - 80px));margin-inline:auto}
+  .skip{
+    position:absolute;left:-9999px;top:0;z-index:100;
+    background:var(--surface);border:1px solid var(--accent);border-radius:8px;padding:10px 16px;font-size:12px;
+  }
+  .skip:focus{left:16px;top:16px}
+
+  /* ============ 通用文字 ============ */
+  .eyebrow{
+    display:flex;align-items:center;gap:8px;
+    font-size:10px;font-weight:600;letter-spacing:2.4px;text-transform:uppercase;color:var(--muted);
+  }
+  .live-dot{
+    width:6px;height:6px;border-radius:50%;background:var(--success);flex:none;
+    box-shadow:0 0 0 3px color-mix(in srgb,var(--success) 16%,transparent);
+  }
+  h2{
+    font-family:var(--serif);font-weight:400;font-size:clamp(31px,3.3vw,44px);
+    line-height:1.3;letter-spacing:.6px;margin-top:16px;text-wrap:balance;
+  }
+  .sec-head{
+    display:grid;grid-template-columns:1.05fr .95fr;gap:64px;align-items:end;
+    padding-bottom:28px;border-bottom:1px solid var(--line);
+  }
+  .sec-head p{font-size:13px;line-height:1.95;color:var(--muted);max-width:44ch}
+
+  /* ============ 导航 ============ */
+  .nav{
+    position:sticky;top:0;z-index:60;background:var(--paper);
+    border-bottom:1px solid var(--line);
+  }
+  .nav-inner{
+    height:76px;display:flex;align-items:center;justify-content:space-between;gap:24px;
+  }
+  .brand{display:flex;align-items:center;gap:11px;flex:none}
+  .mark{
+    width:38px;height:38px;border:1px solid var(--line);border-radius:10px;background:var(--surface);
+    display:grid;place-items:center;color:var(--ink);flex:none;
+  }
+  .mark svg{width:24px;height:24px}
+  .brand-text b{
+    display:block;font-family:var(--serif);font-size:19px;font-weight:400;letter-spacing:5px;line-height:1.1;
+  }
+  .brand-text small{
+    display:block;font-size:7.5px;letter-spacing:4px;color:var(--muted);margin-top:3px;
+  }
+  .nav-links{display:flex;gap:30px;font-size:13px;color:var(--muted)}
+  .nav-links a{position:relative;padding:6px 0;transition:color .18s ease}
+  .nav-links a::after{
+    content:"";position:absolute;left:0;right:0;bottom:0;height:1px;background:var(--accent);
+    transform:scaleX(0);transform-origin:left;transition:transform .2s ease;
+  }
+  .nav-links a:hover{color:var(--ink)}
+  .nav-links a:hover::after{transform:scaleX(1)}
+  .nav-actions{display:flex;align-items:center;gap:10px;flex:none}
+  .theme-btn{
+    width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:transparent;
+    color:var(--muted);display:grid;place-items:center;transition:color .18s,border-color .18s;
+  }
+  .theme-btn:hover{color:var(--accent);border-color:var(--accent)}
+  .theme-btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.5}
+  .theme-btn svg .half{fill:currentColor;stroke:none}
+  .gh-btn{
+    display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 15px;border-radius:8px;
+    background:var(--accent);color:#FFF8F0;font-size:12.5px;font-weight:600;letter-spacing:.3px;
+    transition:background .18s;
+  }
+  .gh-btn:hover{background:var(--accent-press)}
+  .gh-btn svg{width:16px;height:16px;fill:currentColor}
+
+  /* ============ Hero ============ */
+  .hero{padding:72px 0 0}
+  .hero-inner{display:grid;grid-template-columns:1.02fr .98fr;gap:56px;align-items:center}
+  .hero h1{
+    font-family:var(--serif);font-weight:400;font-size:clamp(43px,4.8vw,66px);
+    line-height:1.26;letter-spacing:.5px;margin-top:22px;text-wrap:balance;
+  }
+  .lede{
+    margin-top:26px;font-size:14.5px;line-height:2;color:var(--muted);max-width:44ch;
+  }
+  .hero-cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:32px}
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:9px;
+    height:46px;padding:0 22px;border-radius:9px;border:1px solid transparent;
+    font-size:13.5px;font-weight:600;letter-spacing:.3px;transition:background .18s,border-color .18s,color .18s;
+  }
+  .btn svg{width:15px;height:15px}
+  .btn.primary{background:var(--accent);color:#FFF8F0}
+  .btn.primary:hover{background:var(--accent-press)}
+  .btn.primary svg{fill:currentColor}
+  .btn.secondary{border-color:var(--line);color:var(--ink);background:transparent}
+  .btn.secondary:hover{border-color:var(--accent);color:var(--accent)}
+  .btn.secondary svg{stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+  .hero-meta{
+    display:flex;flex-wrap:wrap;align-items:center;gap:9px;margin-top:24px;
+    font-size:10.5px;letter-spacing:.5px;color:var(--muted);
+  }
+  .hero-meta .sep{width:1px;height:10px;background:var(--line)}
+  .hero-meta b{font-weight:600;color:var(--ink)}
+
+  .hero-visual{position:relative;display:flex;justify-content:center;padding:10px 0 18px}
+  .hero-visual::before{
+    content:"";position:absolute;z-index:0;inset:42px 20px 12px 38px;
+    background:var(--wash);border:1px solid var(--line);border-radius:18px;
+  }
+  .phone{
+    position:relative;z-index:2;width:318px;height:646px;flex:none;
+    background:var(--paper);border:1px solid var(--line);border-radius:30px;
+    box-shadow:0 26px 70px rgba(48,36,24,.16);
+    display:flex;flex-direction:column;overflow:hidden;
+  }
+  html[data-nestle-theme="dark"] .phone{box-shadow:0 26px 70px rgba(0,0,0,.48)}
+  .phone-status{
+    height:28px;flex:none;display:flex;align-items:center;justify-content:space-between;
+    padding:0 18px;font-size:9px;font-weight:600;letter-spacing:.3px;font-variant-numeric:tabular-nums;
+  }
+  .status-right{display:flex;align-items:center;gap:5px;color:var(--ink)}
+  .status-right svg{width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round}
+  .status-batt{width:16px;height:8px;border:1px solid currentColor;border-radius:2px;position:relative;opacity:.85}
+  .status-batt::after{content:"";position:absolute;inset:1px;right:4px;background:currentColor;border-radius:1px}
+  .phone-screen{flex:1;min-height:0;overflow:hidden;padding:4px 15px 8px}
+  .ph-head{display:flex;align-items:flex-start;justify-content:space-between;padding:2px 1px 8px}
+  .ph-head .eyebrow{font-size:7.5px;letter-spacing:1.6px;gap:0}
+  .ph-head h3{font-family:var(--serif);font-weight:400;font-size:21px;line-height:1.2;margin-top:3px;letter-spacing:.5px}
+  .ph-profile{display:flex;align-items:center;gap:8px;padding:8px 1px;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+  .avatar{
+    width:30px;height:30px;border-radius:50%;background:var(--wash);border:1px solid var(--line);
+    display:grid;place-items:center;font-family:var(--serif);font-size:11px;color:var(--accent);flex:none;
+  }
+  .avatar.sm{width:22px;height:22px;font-size:9px}
+  .ph-profile .p-name b{display:block;font-size:10.5px;font-weight:600}
+  .ph-profile .p-name span{display:block;font-size:8px;color:var(--muted);margin-top:1px}
+  .ph-count{margin-left:auto;display:flex;gap:9px;text-align:center}
+  .ph-count b{display:block;font-family:var(--serif);font-size:12px;font-weight:400;font-variant-numeric:tabular-nums}
+  .ph-count span{display:block;font-size:7px;color:var(--muted)}
+  .ph-composer{
+    display:flex;align-items:center;gap:7px;padding:10px 1px;border-bottom:1px solid var(--line);
+    font-size:10px;color:var(--muted);
+  }
+  .ph-composer svg{width:12px;height:12px;stroke:var(--accent);fill:none;stroke-width:1.7;stroke-linecap:round}
+  .ph-composer .tail{margin-left:auto;display:flex;gap:8px;color:var(--muted)}
+  .ph-composer .tail svg{stroke:var(--muted);width:11px;height:11px}
+  .ph-memo{border:1px solid var(--line);border-radius:9px;background:var(--surface);padding:10px 11px;margin-top:10px}
+  .ph-memo-head{display:flex;align-items:center;gap:7px}
+  .ph-memo-head b{display:block;font-size:9.5px;font-weight:600}
+  .ph-memo-head span{display:block;font-size:7.5px;color:var(--muted);margin-top:1px}
+  .ph-memo-head .more{margin-left:auto;color:var(--muted);font-size:12px;letter-spacing:1px}
+  .ph-memo h4{font-family:var(--serif);font-weight:400;font-size:13.5px;margin:8px 0 4px;letter-spacing:.2px}
+  .ph-memo p{font-size:9px;line-height:1.75;color:var(--muted)}
+  .ph-memo p strong{color:var(--ink);font-weight:600}
+  .ph-tasks{list-style:none;margin:7px 0 0;padding:0;display:grid;gap:3px}
+  .ph-tasks li{position:relative;padding-left:15px;font-size:8.5px;color:var(--ink)}
+  .ph-tasks li::before{
+    content:"";position:absolute;left:0;top:1.5px;width:9px;height:9px;border:1px solid var(--line);border-radius:2px;
+  }
+  .ph-tasks li.done{color:var(--muted);text-decoration:line-through;text-decoration-color:color-mix(in srgb,var(--muted) 50%,transparent)}
+  .ph-tasks li.done::before{background:var(--accent);border-color:var(--accent)}
+  .ph-tasks li.done::after{
+    content:"";position:absolute;left:2.5px;top:3.5px;width:4px;height:2.5px;
+    border-left:1.2px solid #FFF8F0;border-bottom:1.2px solid #FFF8F0;transform:rotate(-45deg);
+  }
+  .ph-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px;margin-top:8px;border-radius:4px;overflow:hidden}
+  .ph-grid img{width:100%;aspect-ratio:4/3;object-fit:cover;background:var(--wash)}
+  .ph-comment{margin-top:7px;padding-top:6px;border-top:1px solid var(--line);font-size:8px;color:var(--muted)}
+  .ph-comment b{color:var(--ink);font-weight:600;margin-right:3px}
+  .phone-tabs{
+    height:52px;flex:none;border-top:1px solid var(--line);display:flex;align-items:stretch;background:var(--paper);
+  }
+  .ph-tab{
+    flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+    font-size:7px;color:var(--muted);position:relative;letter-spacing:.2px;
+  }
+  .ph-tab svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+  .ph-tab.active{color:var(--accent)}
+  .ph-tab.active::before{content:"";position:absolute;top:0;width:14px;height:2px;background:var(--accent)}
+
+  .ticket{
+    position:absolute;z-index:4;left:-12px;bottom:52px;width:210px;
+    background:var(--surface);border:1px solid var(--line);border-radius:9px;
+    padding:12px 14px 13px;transform:rotate(-3deg);
+    box-shadow:4px 4px 0 var(--shade);
+  }
+  .ticket::before{content:"";position:absolute;left:9px;right:9px;top:0;border-top:1px dashed var(--line)}
+  .receipt-label{
+    display:block;font-size:7.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);
+  }
+  .ticket-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .ticket-stamp{
+    font-size:7px;letter-spacing:1.2px;color:var(--olive);border:1px solid var(--olive);
+    border-radius:3px;padding:1px 5px;transform:rotate(-6deg);flex:none;
+  }
+  .ticket-line{display:flex;justify-content:space-between;gap:8px;font-size:9.5px;margin-top:7px;color:var(--muted)}
+  .ticket-line b{font-weight:600;color:var(--ink);font-size:10px}
+  .ticket-dash{border-top:1px dashed var(--line);margin:9px 0 0}
+  .seal{
+    position:absolute;z-index:5;top:24px;right:4px;width:86px;height:86px;border-radius:50%;
+    border:1px solid var(--accent);background:var(--paper);color:var(--accent);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+    font-family:var(--serif);font-size:12px;letter-spacing:3px;line-height:1.5;transform:rotate(9deg);
+    padding-left:3px;
+  }
+  .seal small{font-family:var(--sans);font-size:6px;letter-spacing:1.6px;color:var(--muted);padding-left:2px}
+
+  .hero-strip{
+    display:grid;grid-template-columns:repeat(4,1fr);
+    border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-top:60px;
+  }
+  .hero-strip > div{display:flex;align-items:baseline;gap:10px;padding:22px 4px}
+  .hero-strip > div + div{border-left:1px solid var(--line);padding-left:26px}
+  .hero-strip b{
+    font-family:var(--serif);font-size:29px;font-weight:400;letter-spacing:1px;
+    font-variant-numeric:tabular-nums;line-height:1;
+  }
+  .hero-strip span{font-size:10.5px;color:var(--muted);letter-spacing:.3px}
+
+  /* ============ 功能区 ============ */
+  .section{padding:92px 0 0}
+  .section[id]{scroll-margin-top:92px}
+  .features{padding-top:8px}
+  .feature{
+    display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center;
+    padding:58px 0;border-bottom:1px solid var(--line);
+  }
+  .feature:last-child{border-bottom:0;padding-bottom:12px}
+  .feature.flip .f-visual{order:-1}
+  .f-copy{max-width:440px}
+  .f-head{display:flex;align-items:baseline;gap:13px}
+  .f-index{
+    font-family:var(--serif);font-size:15px;color:var(--accent);letter-spacing:1px;
+    font-variant-numeric:tabular-nums;
+  }
+  .f-tag{font-size:9.5px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--muted)}
+  .f-copy h3{
+    font-family:var(--serif);font-weight:400;font-size:29px;line-height:1.4;
+    letter-spacing:.4px;margin-top:14px;
+  }
+  .f-copy > p{margin-top:14px;font-size:13px;line-height:1.95;color:var(--muted)}
+  .ticks{list-style:none;margin:20px 0 0;padding:0;display:grid;gap:10px;font-size:12.5px}
+  .ticks li{position:relative;padding-left:20px;line-height:1.7;color:var(--ink)}
+  .ticks li::before{
+    content:"";position:absolute;left:0;top:8px;width:7px;height:7px;border:1px solid var(--accent);border-radius:50%;
+  }
+
+  .f-visual{
+    position:relative;min-height:390px;padding:30px;border:1px solid var(--line);border-radius:14px;
+    background:var(--wash);display:flex;align-items:center;justify-content:center;
+  }
+  .demo-card{
+    width:100%;max-width:344px;background:var(--surface);border:1px solid var(--line);
+    border-radius:12px;padding:16px;font-size:11px;line-height:1.6;
+  }
+  .demo-card .avatar{width:28px;height:28px;font-size:10px}
+  .pill{
+    margin-left:auto;font-size:8px;letter-spacing:.7px;color:var(--muted);
+    border:1px solid var(--line);border-radius:999px;padding:2px 7px;white-space:nowrap;
+  }
+
+  /* Memos demo */
+  .dc-head{display:flex;align-items:center;gap:9px}
+  .dc-head b{display:block;font-size:11px;font-weight:600}
+  .dc-head span{display:block;font-size:9px;color:var(--muted);margin-top:1px}
+  .memo-demo h4{font-family:var(--serif);font-weight:400;font-size:17px;margin:12px 0 6px;letter-spacing:.3px}
+  .dc-text{font-size:10.5px;line-height:1.85;color:var(--muted)}
+  .dc-text strong{color:var(--ink);font-weight:600}
+  .tasks{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:5px}
+  .tasks li{position:relative;padding-left:19px;font-size:10px}
+  .tasks li::before{content:"";position:absolute;left:0;top:3px;width:11px;height:11px;border:1px solid var(--line);border-radius:3px}
+  .tasks li.done{color:var(--muted);text-decoration:line-through;text-decoration-color:color-mix(in srgb,var(--muted) 50%,transparent)}
+  .tasks li.done::before{background:var(--accent);border-color:var(--accent)}
+  .tasks li.done::after{
+    content:"";position:absolute;left:3px;top:6px;width:5px;height:3px;
+    border-left:1.4px solid #FFF8F0;border-bottom:1.4px solid #FFF8F0;transform:rotate(-45deg);
+  }
+  .dc-photo{width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:7px;margin-top:11px;background:var(--wash)}
+  .dc-comment{margin-top:10px;padding-top:8px;border-top:1px solid var(--line);font-size:9.5px;color:var(--muted)}
+  .dc-comment b{color:var(--ink);font-weight:600;margin-right:4px}
+
+  /* 食刻 demo */
+  .demo-search{
+    display:flex;align-items:center;gap:7px;border-bottom:1px solid var(--line);
+    padding-bottom:8px;font-size:9.5px;color:var(--muted);
+  }
+  .demo-search svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:1.6;flex:none}
+  .dish{display:flex;gap:10px;padding:11px 0;border-bottom:1px solid var(--line);align-items:flex-start}
+  .dish img{width:74px;aspect-ratio:4/3;object-fit:cover;border-radius:5px;flex:none;background:var(--wash)}
+  .dish-main{flex:1;min-width:0;padding-top:1px}
+  .dish-main b{display:block;font-size:11px;font-weight:600;line-height:1.5}
+  .dish-meta{display:flex;align-items:center;gap:6px;font-size:8.5px;color:var(--muted);margin-top:3px}
+  .stars{color:var(--gold);letter-spacing:1px;font-size:8.5px}
+  .tags{display:flex;gap:4px;margin-top:5px}
+  .tags i{font-style:normal;font-size:7.5px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:1px 5px;white-space:nowrap}
+  .add{
+    width:22px;height:22px;border-radius:50%;border:1px solid var(--line);color:var(--accent);
+    display:grid;place-items:center;flex:none;align-self:flex-end;font-size:13px;line-height:1;
+  }
+  .cart-mini{margin-top:11px;padding-top:9px;border-top:1px dashed var(--line)}
+  .cart-mini-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:3px}
+  .cart-mini b{font-family:var(--serif);font-size:16px;font-weight:400;font-variant-numeric:tabular-nums}
+  .cart-mini .count{font-size:9px;color:var(--muted);margin-left:4px}
+  .cart-mini button{border:0;background:var(--accent);color:#FFF8F0;border-radius:5px;padding:5px 10px;font-size:9px;font-weight:600}
+
+  /* 订单 demo */
+  .ot-top{display:flex;align-items:center;gap:8px}
+  .ot-top b{display:block;font-size:10.5px;font-weight:600}
+  .ot-top span{display:block;font-size:8.5px;color:var(--muted);margin-top:1px}
+  .stamp{
+    margin-left:auto;font-size:7.5px;letter-spacing:1.2px;border:1px solid var(--accent);
+    color:var(--accent);border-radius:3px;padding:2px 6px;transform:rotate(-4deg);
+    text-transform:uppercase;white-space:nowrap;align-self:flex-start;
+  }
+  .ot-thumbs{display:flex;gap:4px;margin-top:11px}
+  .ot-thumbs img{width:44px;height:44px;object-fit:cover;border-radius:5px;background:var(--wash)}
+  .ot-row{
+    display:flex;justify-content:space-between;gap:10px;padding:7px 0;
+    border-bottom:1px dashed var(--line);font-size:10px;color:var(--muted);font-variant-numeric:tabular-nums;
+  }
+  .ot-row b{font-weight:500;color:var(--ink)}
+  .ot-row.total{border-bottom:0;padding-bottom:2px}
+  .ot-row.total b{font-family:var(--serif);font-size:14px;font-weight:400}
+  .ot-note{font-size:9px;color:var(--muted);line-height:1.7;margin-top:4px}
+  .ot-actions{
+    display:flex;gap:12px;margin-top:9px;padding-top:9px;border-top:1px solid var(--line);
+    font-size:9px;color:var(--accent);
+  }
+
+  /* 购物清单 demo */
+  .shop-top{display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:8px;border-bottom:1px solid var(--line)}
+  .shop-top b{display:block;font-family:var(--serif);font-size:17px;font-weight:400;margin-top:2px}
+  .check-row{display:flex;align-items:center;gap:9px;padding:9px 0;border-bottom:1px solid var(--line);font-size:10px}
+  .cbox{
+    width:13px;height:13px;border:1px solid var(--line);border-radius:3px;
+    display:grid;place-items:center;font-size:8px;flex:none;color:transparent;
+  }
+  .check-row.done .cbox{background:var(--accent);border-color:var(--accent);color:#FFF8F0}
+  .check-row.done .cname{color:var(--muted);text-decoration:line-through;text-decoration-color:color-mix(in srgb,var(--muted) 50%,transparent)}
+  .cname{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .cprice{font-family:var(--serif);font-size:11px;font-variant-numeric:tabular-nums}
+  .shop-chart{margin-top:12px}
+  .ch-head{display:flex;justify-content:space-between;align-items:baseline;font-size:8.5px;color:var(--muted)}
+  .ch-head b{font-family:var(--serif);font-size:14px;font-weight:400;color:var(--ink);font-variant-numeric:tabular-nums}
+  .bars{display:flex;align-items:flex-end;gap:5px;height:48px;margin-top:8px}
+  .bars i{flex:1;background:var(--wash);border-radius:2px 2px 0 0;min-height:3px}
+  .bars i.hot{background:color-mix(in srgb,var(--accent) 72%,var(--paper))}
+
+  /* ============ 家庭服务器 ============ */
+  .family-block{padding:88px 0 0}
+  .family-grid{display:grid;grid-template-columns:.92fr 1.08fr;gap:72px;align-items:center;padding-top:58px;border-top:1px solid var(--line)}
+  .family-grid h2{font-size:clamp(30px,3.1vw,41px)}
+  .family-grid .ticks li{font-size:12.5px}
+  .plate{
+    border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:0 22px;
+    max-width:520px;width:100%;justify-self:end;
+  }
+  .plate-top{display:flex;align-items:flex-start;gap:12px;padding:20px 0 16px;border-bottom:1px solid var(--line)}
+  .plate-name{font-family:var(--serif);font-size:21px;line-height:1.3}
+  .plate-ip{font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:5px;letter-spacing:.2px}
+  .sync-btn{
+    margin-left:auto;display:inline-flex;align-items:center;gap:6px;flex:none;
+    border:1px solid var(--line);background:var(--paper);color:var(--accent);
+    border-radius:7px;padding:8px 11px;font-size:10px;font-weight:600;
+  }
+  .sync-btn svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round}
+  .plate-row{
+    display:flex;justify-content:space-between;gap:12px;padding:11px 0;
+    border-bottom:1px dashed var(--line);font-size:11.5px;color:var(--muted);
+  }
+  .plate-row b{font-weight:500;color:var(--ink);font-variant-numeric:tabular-nums}
+  .plate-row b.ok{display:flex;align-items:center;gap:6px;color:var(--success)}
+  .plate-row b.ok i{width:5px;height:5px;border-radius:50%;background:var(--success)}
+  .members{display:flex;align-items:center;gap:11px;padding:15px 0 17px;font-size:10.5px;color:var(--muted)}
+  .face-stack{display:flex;flex:none}
+  .face-stack .avatar{width:26px;height:26px;font-size:9px;margin-left:-7px;border:2px solid var(--surface)}
+  .face-stack .avatar:first-child{margin-left:0}
+  .members .names{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .members .count{font-family:var(--serif);font-size:13px;color:var(--ink);flex:none}
+
+  /* ============ 设计 ============ */
+  .design-section{
+    margin-top:92px;padding:88px 0;background:var(--wash);
+    border-top:1px solid var(--line);border-bottom:1px solid var(--line);scroll-margin-top:92px;
+  }
+  .design-section .sec-head{margin-bottom:48px}
+  .design-grid{display:grid;grid-template-columns:.86fr 1.14fr;gap:72px}
+  .principle{display:flex;gap:16px;padding:20px 0;border-top:1px solid var(--line)}
+  .principle:last-child{border-bottom:1px solid var(--line)}
+  .principle b{font-family:var(--serif);font-size:13px;font-weight:400;color:var(--accent);min-width:22px;padding-top:1px}
+  .principle h3{font-size:13.5px;font-weight:600;margin-bottom:4px}
+  .principle p{font-size:12px;line-height:1.85;color:var(--muted)}
+  .palette{display:grid;grid-template-columns:1fr 1fr;gap:0 28px;border-top:1px solid var(--line)}
+  .swatch{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
+  .swatch i{width:21px;height:21px;border-radius:50%;border:1px solid color-mix(in srgb,var(--ink) 14%,transparent);flex:none}
+  .swatch span{font-size:10.5px;color:var(--ink)}
+  .swatch code{font-family:var(--mono);font-size:9px;color:var(--muted);margin-left:auto;letter-spacing:.2px}
+  .palette-note{font-size:10px;color:var(--muted);margin-top:12px;letter-spacing:.2px}
+  .specimen{
+    margin-top:26px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:24px 26px 22px;
+  }
+  .specimen .big{
+    font-family:var(--serif);font-weight:400;font-size:clamp(25px,2.6vw,33px);line-height:1.5;
+    letter-spacing:1px;margin:10px 0 8px;
+  }
+  .specimen p{font-size:11.5px;line-height:1.95;color:var(--muted);max-width:38ch}
+  .specimen .small-line{
+    display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:14px;padding-top:10px;
+    border-top:1px solid var(--line);font-size:9px;color:var(--muted);letter-spacing:.5px;
+    font-variant-numeric:tabular-nums;
+  }
+  .specimen .small-line .dot{width:2px;height:2px;border-radius:50%;background:var(--muted)}
+
+  /* ============ 上手 ============ */
+  .start-section{padding:92px 0 0;scroll-margin-top:92px}
+  .start-grid{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center;padding-top:52px}
+  .start-grid h2{font-size:clamp(30px,3.1vw,41px)}
+  .steps{margin-top:26px;border-top:1px solid var(--line)}
+  .step{display:flex;gap:17px;padding:19px 0;border-bottom:1px solid var(--line)}
+  .step-no{
+    width:27px;height:27px;border-radius:50%;border:1px solid var(--accent);color:var(--accent);
+    display:grid;place-items:center;font-size:10px;flex:none;font-variant-numeric:tabular-nums;
+  }
+  .step h3{font-size:13.5px;font-weight:600;margin-bottom:4px}
+  .step p{font-size:12px;line-height:1.85;color:var(--muted)}
+  .step code{
+    font-family:var(--mono);font-size:10.5px;background:var(--wash);border:1px solid var(--line);
+    border-radius:4px;padding:1px 5px;white-space:nowrap;
+  }
+  .code-card{
+    background:var(--surface);border:1px solid var(--line);border-radius:12px;
+    padding:20px 22px 16px;box-shadow:5px 5px 0 var(--shade);position:relative;
+  }
+  .code-card::before{content:"";position:absolute;left:9px;right:9px;top:0;border-top:1px dashed var(--line)}
+  .code-card pre{
+    margin:12px 0 0;font-family:var(--mono);font-size:11.5px;line-height:2.1;
+    overflow-x:auto;color:var(--ink);white-space:pre;
+  }
+  .code-card .cm{color:var(--muted)}
+  .code-foot{
+    display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-top:14px;padding-top:11px;
+    border-top:1px dashed var(--line);font-size:9px;color:var(--muted);letter-spacing:.3px;
+  }
+  .code-foot a{color:var(--accent)}
+  .code-foot a:hover{text-decoration:underline;text-underline-offset:3px}
+
+  /* ============ FAQ ============ */
+  .faq-section{padding:92px 0 0;scroll-margin-top:92px}
+  .faq-list{max-width:860px;margin-top:34px;border-top:1px solid var(--line)}
+  .faq-list details{border-bottom:1px solid var(--line)}
+  .faq-list summary{
+    list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:24px;
+    padding:19px 0;font-size:13.5px;font-weight:600;color:var(--ink);
+  }
+  .faq-list summary::-webkit-details-marker{display:none}
+  .faq-list summary::after{
+    content:"+";font-family:var(--serif);font-size:19px;font-weight:400;color:var(--accent);
+    line-height:1;flex:none;transition:transform .18s ease;
+  }
+  .faq-list details[open] summary::after{content:"−"}
+  .faq-list details p{
+    font-size:12.5px;line-height:1.95;color:var(--muted);max-width:70ch;
+    margin:0 0 20px;padding-right:36px;
+  }
+
+  /* ============ CTA ============ */
+  .cta-section{padding:92px 0}
+  .cta-card{
+    position:relative;display:grid;grid-template-columns:1fr auto;gap:48px;align-items:center;
+    border:1px solid var(--line);border-radius:16px;background:var(--surface);padding:54px 56px;
+    overflow:hidden;
+  }
+  .cta-card::before{content:"";position:absolute;left:22px;right:22px;top:0;border-top:1px dashed var(--line)}
+  .cta-card h2{font-size:clamp(30px,3.2vw,42px);margin-top:14px}
+  .cta-card p{margin-top:14px;font-size:12.5px;line-height:1.95;color:var(--muted);max-width:46ch}
+  .cta-card .btn{margin-top:26px}
+  .cta-seal{
+    width:142px;height:142px;border-radius:50%;border:1px solid var(--accent);color:var(--accent);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+    transform:rotate(8deg);flex:none;box-shadow:inset 0 0 0 6px var(--surface),inset 0 0 0 7px var(--accent);
+  }
+  .cta-seal span{font-family:var(--serif);font-size:23px;letter-spacing:7px;padding-left:7px;line-height:1.3}
+  .cta-seal small{font-size:7px;letter-spacing:2.4px;line-height:1.7;text-align:center;color:var(--muted);padding-left:2px}
+
+  /* ============ 页脚 ============ */
+  .footer{border-top:1px solid var(--line);padding:44px 0 30px}
+  .foot-grid{display:grid;grid-template-columns:1.6fr .7fr .7fr;gap:48px}
+  .foot-brand{display:flex;gap:12px;align-items:flex-start}
+  .foot-brand .brand-text b{font-size:17px}
+  .foot-brand p{font-size:11px;line-height:1.9;color:var(--muted);margin-top:11px;max-width:34ch}
+  .foot-col h4{
+    font-size:8.5px;font-weight:600;letter-spacing:2px;text-transform:uppercase;
+    color:var(--muted);margin:4px 0 13px;
+  }
+  .foot-links{display:grid;gap:9px;font-size:12px;color:var(--ink)}
+  .foot-links a{display:inline-flex;align-items:center;gap:6px;transition:color .18s}
+  .foot-links a:hover{color:var(--accent)}
+  .foot-links .ext{font-size:10px;color:var(--muted)}
+  .foot-bottom{
+    display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;
+    margin-top:38px;padding-top:17px;border-top:1px solid var(--line);
+    font-size:9.5px;letter-spacing:.3px;color:var(--muted);
+  }
+
+  /* ============ 入场动效 ============ */
+  .js .reveal{opacity:0;transform:translateY(10px);transition:opacity .45s ease-out,transform .45s ease-out}
+  .js .reveal.in{opacity:1;transform:none}
+  @media (prefers-reduced-motion:reduce){
+    .js .reveal{opacity:1;transform:none;transition:none}
+  }
+
+  /* ============ 响应式 ============ */
+  @media (max-width:1120px){
+    .hero-inner{gap:40px}
+    .feature{gap:44px}
+    .family-grid{gap:48px}
+    .design-grid{gap:48px}
+    .start-grid{gap:52px}
+  }
+  @media (max-width:1024px){
+    .wrap{width:calc(100% - 56px)}
+    .design-section .sec-head{margin-bottom:36px}
+    .design-grid{grid-template-columns:1fr;gap:34px}
+    .start-grid{grid-template-columns:1fr;gap:40px}
+    .family-grid{grid-template-columns:.95fr 1.05fr;gap:40px}
+    .plate{justify-self:start}
+  }
+  @media (max-width:920px){
+    .nav-links{display:none}
+    .hero{padding-top:52px}
+    .hero-inner{grid-template-columns:1fr;gap:30px}
+    .hero-copy{max-width:640px}
+    .hero-visual{margin-top:14px;padding-bottom:30px}
+    .hero-visual::before{inset:30px 24px 20px 24px}
+    .hero-strip{margin-top:44px}
+    .sec-head{grid-template-columns:1fr;gap:14px;align-items:start}
+    .sec-head p{max-width:56ch}
+    .feature{grid-template-columns:1fr;gap:30px;padding:44px 0}
+    .feature.flip .f-visual{order:0}
+    .f-copy{max-width:none}
+    .f-visual{min-height:0;padding:26px 22px}
+    .family-grid{grid-template-columns:1fr;gap:30px;padding-top:42px}
+    .family-block{padding-top:70px}
+    .plate{justify-self:start}
+    .cta-card{grid-template-columns:1fr;padding:40px 34px;gap:30px}
+    .cta-seal{position:absolute;right:26px;top:26px;width:92px;height:92px;opacity:.5}
+    .cta-seal span{font-size:15px;letter-spacing:5px}
+    .cta-seal small{font-size:5.5px;letter-spacing:1.4px}
+  }
+  @media (max-width:720px){
+    .wrap{width:calc(100% - 40px)}
+    .nav-inner{height:66px}
+    .brand-text b{font-size:17px;letter-spacing:4px}
+    .brand-text small{font-size:6.5px;letter-spacing:3px}
+    .theme-btn{width:34px;height:34px}
+    .gh-btn{height:34px;padding:0 12px;font-size:11.5px}
+    .section{padding-top:66px}
+    .hero-strip{grid-template-columns:1fr 1fr;margin-top:36px}
+    .hero-strip > div{padding:18px 2px}
+    .hero-strip > div:nth-child(odd){border-left:0;padding-left:2px}
+    .hero-strip > div:nth-child(n+3){border-top:1px solid var(--line)}
+    .hero-strip > div:nth-child(2){padding-left:18px}
+    .hero-strip b{font-size:25px}
+    .hero-strip span{font-size:9.5px}
+    .hero h1{font-size:clamp(38px,10.4vw,52px);letter-spacing:.5px}
+    .lede{font-size:13.5px}
+    .design-section{margin-top:66px;padding:66px 0}
+    .faq-section,.start-section,.section{padding-top:66px}
+    .cta-section{padding:66px 0 76px}
+    .cta-card{padding:34px 24px}
+    .cta-seal{display:none}
+    .foot-grid{grid-template-columns:1fr 1fr;gap:32px}
+    .foot-brand{grid-column:1/-1}
+    .palette{grid-template-columns:1fr}
+    .specimen{padding:20px}
+  }
+  @media (max-width:560px){
+    .phone{width:300px;height:610px}
+    .hero-visual{padding-top:0}
+    .ticket{left:-6px;bottom:34px;width:186px;padding:10px 12px}
+    .seal{top:6px;right:-2px;width:74px;height:74px;font-size:10px}
+    .seal small{font-size:5px}
+    .hero-visual::before{inset:24px 14px 16px 14px}
+    .f-visual{padding:20px 14px}
+    .demo-card{padding:14px}
+    .dish img{width:62px}
+    .cta-card .btn{width:100%}
+    .foot-bottom{flex-direction:column;gap:6px}
+  }
+  @media (max-width:400px){
+    .phone{width:276px;height:570px}
+    .ticket{display:none}
+    .seal{display:none}
+    .hero-meta{font-size:9.5px}
+    .plate{padding:0 16px}
+    .sync-btn{display:none}
+  }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">跳到正文</a>
+
+<header class="nav">
+  <div class="wrap nav-inner">
+    <a class="brand" href="#top" aria-label="栖迟 Nestle 首页">
+      <span class="mark" aria-hidden="true">
+        <svg viewBox="0 0 32 32" fill="none">
+          <path d="M5 9h22" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>
+          <path d="M10 9v15M22 9v15" stroke="currentColor" stroke-width="2.2"/>
+          <path d="M12.5 16c0-1.2 1.6-2 3.5-2s3.5.8 3.5 2v3.4c0 1.2-1.6 2-3.5 2s-3.5-.8-3.5-2z" fill="var(--accent)" stroke="var(--accent)" stroke-width="1"/>
+          <path d="M16 12.5V14M16 21.4v2.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+      </span>
+      <span class="brand-text"><b>栖迟</b><small>NESTLE</small></span>
+    </a>
+
+    <nav class="nav-links" aria-label="页面导航">
+      <a href="#features">功能</a>
+      <a href="#design">设计</a>
+      <a href="#start">上手</a>
+      <a href="#faq">问答</a>
+    </nav>
+
+    <div class="nav-actions">
+      <button class="theme-btn" id="themeBtn" type="button" aria-label="切换深浅色" aria-pressed="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="8"/>
+          <path class="half" d="M12 4a8 8 0 0 0 0 16z"/>
+        </svg>
+      </button>
+      <a class="gh-btn" href="https://github.com/EmptyStars/Nestle" target="_blank" rel="noopener" aria-label="在 GitHub 上查看栖迟 Nestle（新窗口打开）">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2C6.48 2 2 6.58 2 12.26c0 4.5 2.87 8.32 6.84 9.67.5.09.68-.22.68-.48v-1.7c-2.78.62-3.37-1.37-3.37-1.37-.45-1.18-1.11-1.5-1.11-1.5-.91-.64.07-.62.07-.62 1 .07 1.53 1.06 1.53 1.06.89 1.56 2.34 1.11 2.91.85.09-.66.35-1.11.63-1.37-2.22-.26-4.56-1.14-4.56-5.07 0-1.12.39-2.03 1.03-2.75-.1-.26-.45-1.3.1-2.71 0 0 .84-.28 2.75 1.05a9.35 9.35 0 0 1 5 0c1.91-1.33 2.75-1.05 2.75-1.05.55 1.41.2 2.45.1 2.71.64.72 1.03 1.63 1.03 2.75 0 3.94-2.34 4.81-4.57 5.06.36.32.68.94.68 1.9v2.82c0 .27.18.58.69.48A10.01 10.01 0 0 0 22 12.26C22 6.58 17.52 2 12 2z"/></svg>
+        GitHub
+      </a>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+  <!-- ================= Hero ================= -->
+  <section class="hero" id="top">
+    <div class="wrap hero-inner">
+      <div class="hero-copy">
+        <div class="eyebrow"><span class="live-dot"></span>局域网 · 家庭食谱与备忘 · 开源</div>
+        <h1>把一家人的饭，<br>记在一本手账里。</h1>
+        <p class="lede">栖迟是一套跑在自家局域网里的家庭食谱与备忘系统。食谱、订单、购物清单和日常碎念，都放在家里那台常开的小主机上——没有云端账号，也没有把生活数据交出去的理由。</p>
+        <div class="hero-cta">
+          <a class="btn primary" href="https://github.com/EmptyStars/Nestle" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2C6.48 2 2 6.58 2 12.26c0 4.5 2.87 8.32 6.84 9.67.5.09.68-.22.68-.48v-1.7c-2.78.62-3.37-1.37-3.37-1.37-.45-1.18-1.11-1.5-1.11-1.5-.91-.64.07-.62.07-.62 1 .07 1.53 1.06 1.53 1.06.89 1.56 2.34 1.11 2.91.85.09-.66.35-1.11.63-1.37-2.22-.26-4.56-1.14-4.56-5.07 0-1.12.39-2.03 1.03-2.75-.1-.26-.45-1.3.1-2.71 0 0 .84-.28 2.75 1.05a9.35 9.35 0 0 1 5 0c1.91-1.33 2.75-1.05 2.75-1.05.55 1.41.2 2.45.1 2.71.64.72 1.03 1.63 1.03 2.75 0 3.94-2.34 4.81-4.57 5.06.36.32.68.94.68 1.9v2.82c0 .27.18.58.69.48A10.01 10.01 0 0 0 22 12.26C22 6.58 17.52 2 12 2z"/></svg>
+            在 GitHub 查看源码
+          </a>
+          <a class="btn secondary" href="#features">
+            它都能做什么
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M6 13l6 6 6-6"/></svg>
+          </a>
+        </div>
+        <div class="hero-meta">
+          <b>Android</b><span class="sep"></span><b>Windows</b><span class="sep"></span><b>PocketBase</b>
+          <span class="sep"></span>数据留在自己家
+        </div>
+      </div>
+
+      <div class="hero-visual" aria-hidden="true">
+        <div class="phone">
+          <div class="phone-status">
+            <span>9:41</span>
+            <span class="status-right">
+              <svg viewBox="0 0 24 24"><path d="M3 9.5a15 15 0 0 1 18 0M6 13a10.5 10.5 0 0 1 12 0M9 16.5a6 6 0 0 1 6 0"/></svg>
+              <svg viewBox="0 0 24 24"><path d="M4 18v-3M8 18v-6M12 18V9M16 18V6M20 18v-9"/></svg>
+              <span class="status-batt"></span>
+            </span>
+          </div>
+
+          <div class="phone-screen">
+            <div class="ph-head">
+              <div>
+                <div class="eyebrow">Thursday · 11/06</div>
+                <h3>Memos</h3>
+              </div>
+              <span class="live-dot" style="margin-top:7px"></span>
+            </div>
+
+            <div class="ph-profile">
+              <span class="avatar">满</span>
+              <span class="p-name"><b>林小满</b><span>今天也在好好吃饭</span></span>
+              <span class="ph-count">
+                <span><b>12</b><span>记录</span></span>
+                <span><b>5</b><span>今日</span></span>
+              </span>
+            </div>
+
+            <div class="ph-composer">
+              <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+              写点什么…
+              <span class="tail">
+                <svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="14" rx="2.5"/><circle cx="9" cy="10" r="1.6"/><path d="m4.5 17 5-5 4 4 2.5-2.5 3.5 3.5"/></svg>
+                <svg viewBox="0 0 24 24"><path d="M17 7.5 9.5 15a3 3 0 0 1-4.2-4.2l7.8-7.8a4.5 4.5 0 1 1 6.4 6.4l-7.5 7.5a6 6 0 1 1-8.5-8.5L11 4.7"/></svg>
+              </span>
+            </div>
+
+            <article class="ph-memo">
+              <div class="ph-memo-head">
+                <span class="avatar sm">屿</span>
+                <span><b>陈屿</b><span>8 分钟前</span></span>
+                <span class="more">···</span>
+              </div>
+              <h4>今天的汤，留个方子</h4>
+              <p>小火炖了 <strong>四十分钟</strong>，玉米的甜味都出来了。排骨先焯水，记得撇干净浮沫。</p>
+              <ul class="ph-tasks">
+                <li class="done">玉米切段</li>
+                <li class="done">排骨焯水</li>
+                <li>起锅前再放盐</li>
+              </ul>
+              <div class="ph-grid">
+                <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=fresh%20vegetables%20and%20groceries%20in%20a%20woven%20basket%20on%20a%20wooden%20table%2C%20warm%20morning%20light%2C%20film%20photography&image_size=square" alt="" loading="eager">
+                <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=a%20bowl%20of%20homemade%20noodles%20with%20chopsticks%20on%20a%20wooden%20table%2C%20cozy%20home%2C%20warm%20light%2C%20film%20photo&image_size=square" alt="" loading="eager">
+              </div>
+              <div class="ph-comment"><b>妈妈</b>：多放点姜，去腥。</div>
+            </article>
+          </div>
+
+          <nav class="phone-tabs">
+            <span class="ph-tab active">
+              <svg viewBox="0 0 24 24"><path d="M5 4h14v16l-7-3-7 3z"/><path d="M9 9h6M9 13h6"/></svg>
+              <span>Memos</span>
+            </span>
+            <span class="ph-tab">
+              <svg viewBox="0 0 24 24"><path d="M4 12h16a8 8 0 0 1-8 8 8 8 0 0 1-8-8z"/><path d="M9 8c0-2 1-3 3-3s3 1 3 3"/></svg>
+              <span>食刻</span>
+            </span>
+            <span class="ph-tab">
+              <svg viewBox="0 0 24 24"><path d="M4 5h2l2 10h9l2-7H7"/><circle cx="9" cy="19" r="1.2"/><circle cx="17" cy="19" r="1.2"/></svg>
+              <span>购物清单</span>
+            </span>
+            <span class="ph-tab">
+              <svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3.5 19c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/><circle cx="17" cy="9" r="2.3"/><path d="M15 14.5c3 0 5.5 1.8 5.5 4.5"/></svg>
+              <span>家庭</span>
+            </span>
+          </nav>
+        </div>
+
+        <div class="ticket">
+          <div class="ticket-head">
+            <span class="receipt-label">小票 · 今日菜单</span>
+            <span class="ticket-stamp">已下单</span>
+          </div>
+          <div class="ticket-line"><b>玉米排骨汤</b><span>× 2</span></div>
+          <div class="ticket-line"><b>清蒸鲈鱼</b><span>× 1</span></div>
+          <div class="ticket-dash"></div>
+          <div class="ticket-line"><span>开饭</span><b>18:30</b></div>
+        </div>
+
+        <div class="seal">离线可用<small>OFFLINE OK</small></div>
+      </div>
+    </div>
+
+    <div class="wrap">
+      <div class="hero-strip">
+        <div><b>04</b><span>个日常模块</span></div>
+        <div><b>01</b><span>台家用服务器</span></div>
+        <div><b>60s</b><span>自动同步一次</span></div>
+        <div><b>3–8</b><span>位家人共享</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 功能 ================= -->
+  <section class="section" id="features">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <div>
+          <div class="eyebrow">Modules</div>
+          <h2>四件小事，刚好够用。</h2>
+        </div>
+        <p>Memos、食刻、订单、购物清单，围着一张饭桌转。没有多余的入口，也没有用不上的设置——数据和家人在同一个屋檐下。</p>
+      </div>
+
+      <div class="features">
+        <!-- 01 Memos -->
+        <article class="feature reveal">
+          <div class="f-copy">
+            <div class="f-head"><span class="f-index">01</span><span class="f-tag">Memos · 家庭备忘</span></div>
+            <h3>饭桌上的话，随手记下。</h3>
+            <p>像一张放在厨房台面上的便签：Markdown、照片、待办、附件和评论都能放进去。想给全家看就公开，只想留给自己也可以。</p>
+            <ul class="ticks">
+              <li>Markdown 与任务清单，图片九宫格</li>
+              <li>家庭公开 / 仅自己可见，两种可见性</li>
+              <li>离线也能写，联网后自动补传</li>
+            </ul>
+          </div>
+          <div class="f-visual">
+            <div class="demo-card memo-demo">
+              <div class="dc-head">
+                <span class="avatar">屿</span>
+                <span><b>陈屿</b><span>8 分钟前</span></span>
+                <span class="pill">家庭可见</span>
+              </div>
+              <h4>今天的汤，留个方子</h4>
+              <p class="dc-text">小火炖了 <strong>四十分钟</strong>，玉米的甜味都出来了。排骨先焯水，记得撇干净浮沫。</p>
+              <ul class="tasks">
+                <li class="done">玉米切段</li>
+                <li class="done">排骨焯水</li>
+                <li>起锅前再放盐</li>
+              </ul>
+              <img class="dc-photo" src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Chinese%20corn%20and%20pork%20rib%20soup%20in%20a%20ceramic%20bowl%20with%20steam%2C%20warm%20home%20kitchen%20light%2C%20realistic%20food%20photography&image_size=landscape_4_3" alt="一碗刚炖好的玉米排骨汤" loading="lazy">
+              <div class="dc-comment"><b>妈妈</b>：多放点姜，去腥。</div>
+            </div>
+          </div>
+        </article>
+
+        <!-- 02 食刻 -->
+        <article class="feature flip reveal">
+          <div class="f-copy">
+            <div class="f-head"><span class="f-index">02</span><span class="f-tag">Flavmo · 家庭食谱</span></div>
+            <h3>今天吃什么，交给食刻。</h3>
+            <p>把家里的拿手菜收进一本食谱：食材、用量、步骤、厨具和标签。拿不定主意的时候，就摇一摇随机选菜。</p>
+            <ul class="ticks">
+              <li>分类书签栏 + 本地模糊搜索</li>
+              <li>小票式购物车，份数按 0.5 递增</li>
+              <li>DeepSeek 文本 / 链接 / 图片导入</li>
+            </ul>
+          </div>
+          <div class="f-visual">
+            <div class="demo-card menu-demo">
+              <div class="demo-search">
+                <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg>
+                <span>搜索食谱、食材、标签</span>
+              </div>
+              <div class="dish">
+                <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=steamed%20sea%20bass%20with%20scallion%20and%20ginger%20on%20a%20long%20white%20plate%2C%20Chinese%20dinner%20table%2C%20natural%20light%2C%20realistic%20food%20photo&image_size=landscape_4_3" alt="清蒸鲈鱼" loading="lazy">
+                <div class="dish-main">
+                  <b>清蒸鲈鱼</b>
+                  <div class="dish-meta"><span class="stars">★★★★☆</span>约 25 分钟</div>
+                  <div class="tags"><i>家常菜</i><i>蒸煮</i></div>
+                </div>
+                <span class="add">+</span>
+              </div>
+              <div class="dish">
+                <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=stir%20fried%20tomato%20and%20egg%20Chinese%20home%20style%20dish%20in%20a%20ceramic%20plate%2C%20warm%20light%2C%20realistic%20food%20photo&image_size=landscape_4_3" alt="番茄炒蛋" loading="lazy">
+                <div class="dish-main">
+                  <b>番茄炒蛋</b>
+                  <div class="dish-meta"><span class="stars">★★★★★</span>约 10 分钟</div>
+                  <div class="tags"><i>快手菜</i><i>家常</i></div>
+                </div>
+                <span class="add">+</span>
+              </div>
+              <div class="cart-mini">
+                <span class="receipt-label">小票 · 已选</span>
+                <div class="cart-mini-row">
+                  <span><b>¥68</b><span class="count">· 3 份</span></span>
+                  <button type="button" tabindex="-1">下单</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- 03 订单 -->
+        <article class="feature reveal">
+          <div class="f-copy">
+            <div class="f-head"><span class="f-index">03</span><span class="f-tag">Orders · 厨房小票</span></div>
+            <h3>想吃的菜，写成一张小票。</h3>
+            <p>选好用餐时间，留一句备注，订单就贴在食刻里。谁都可以接单，做完盖个章；需要的食材一键聚进购物清单。</p>
+            <ul class="ticks">
+              <li>待开火 / 已完成 / 已取消，状态印章</li>
+              <li>用餐时间、份量与备注，一眼看清</li>
+              <li>按食谱用量自动聚合同步购物清单</li>
+            </ul>
+          </div>
+          <div class="f-visual">
+            <div class="demo-card order-demo">
+              <div class="ot-top">
+                <span class="avatar sm">满</span>
+                <span><b>林小满</b><span>今天 17:12 下单</span></span>
+                <span class="stamp">待开火</span>
+              </div>
+              <div class="ot-thumbs">
+                <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=braised%20pork%20belly%20Chinese%20home%20style%20in%20a%20ceramic%20bowl%2C%20warm%20lamp%20light%2C%20realistic%20food%20photo&image_size=square" alt="红烧肉" loading="lazy">
+                <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Chinese%20corn%20and%20pork%20rib%20soup%20in%20a%20ceramic%20bowl%20with%20steam%2C%20warm%20home%20kitchen%20light%2C%20realistic%20food%20photography&image_size=square" alt="玉米排骨汤" loading="lazy">
+                <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=steamed%20sea%20bass%20with%20scallion%20and%20ginger%20on%20a%20long%20white%20plate%2C%20Chinese%20dinner%20table%2C%20natural%20light%2C%20realistic%20food%20photo&image_size=square" alt="清蒸鲈鱼" loading="lazy">
+              </div>
+              <div class="ot-row"><span>玉米排骨汤 × 2</span><b>¥46</b></div>
+              <div class="ot-row"><span>清蒸鲈鱼 × 1</span><b>¥32</b></div>
+              <div class="ot-row total"><span>用餐 18:30 · 4 人份</span><b>¥78</b></div>
+              <p class="ot-note">备注：少盐，米饭多一碗。</p>
+              <div class="ot-actions"><span>添加食材到清单</span><span>完成订单</span></div>
+            </div>
+          </div>
+        </article>
+
+        <!-- 04 购物清单 -->
+        <article class="feature flip reveal">
+          <div class="f-copy">
+            <div class="f-head"><span class="f-index">04</span><span class="f-tag">Shopping · 勾选纸</span></div>
+            <h3>买没买，勾一下就好。</h3>
+            <p>一张全家共享的勾选纸，价格和数量写在右边。买完自动落进时间轴，月底还能看看这个月花在了哪里。</p>
+            <ul class="ticks">
+              <li>清单 / 时间轴两个视图</li>
+              <li>完成即记账，支持撤销</li>
+              <li>本月、本年支出与月度柱状图</li>
+            </ul>
+          </div>
+          <div class="f-visual">
+            <div class="demo-card shop-demo">
+              <div class="shop-top">
+                <div><span class="receipt-label">Shared list</span><b>购物清单</b></div>
+                <span class="pill">4 人共享</span>
+              </div>
+              <div class="check-row done"><span class="cbox">✓</span><span class="cname">带皮五花</span><span class="cprice">¥32</span></div>
+              <div class="check-row done"><span class="cbox">✓</span><span class="cname">玉米 · 2 根</span><span class="cprice">¥8</span></div>
+              <div class="check-row"><span class="cbox">✓</span><span class="cname">小葱 · 1 把</span><span class="cprice">¥3</span></div>
+              <div class="check-row"><span class="cbox">✓</span><span class="cname">姜 · 250 克</span><span class="cprice">¥6</span></div>
+              <div class="shop-chart">
+                <div class="ch-head"><span>本月已购</span><b>¥286</b></div>
+                <div class="bars">
+                  <i style="height:26%"></i>
+                  <i style="height:42%"></i>
+                  <i style="height:34%"></i>
+                  <i style="height:58%"></i>
+                  <i style="height:46%"></i>
+                  <i class="hot" style="height:88%"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 家庭服务器 ================= -->
+  <section class="family-block" id="family">
+    <div class="wrap family-grid reveal">
+      <div class="f-copy">
+        <div class="eyebrow">Home server</div>
+        <h2>一台小主机，<br>一家人的服务器。</h2>
+        <p>后端是 PocketBase，跑在 NAS、小主机或家里那台常开的电脑上。手机和 Windows 桌面端各自缓存，每 60 秒和服务器对一次账；断网也不耽误记事和点菜。</p>
+        <ul class="ticks">
+          <li>首个注册账号自动成为管理员</li>
+          <li>成员权限、踢出与历史数据保留</li>
+          <li>离线队列 + 乐观更新，恢复后自动同步</li>
+        </ul>
+      </div>
+      <div class="plate">
+        <div class="plate-top">
+          <div>
+            <div class="plate-name">栖迟之家</div>
+            <div class="plate-ip">192.168.1.20:8090</div>
+          </div>
+          <span class="sync-btn">
+            <svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg>
+            立即同步
+          </span>
+        </div>
+        <div class="plate-row"><span>上次同步</span><b>2 分钟前</b></div>
+        <div class="plate-row"><span>本地数据</span><b>09:36</b></div>
+        <div class="plate-row"><span>连接状态</span><b class="ok"><i></i>在线 · 局域网</b></div>
+        <div class="members">
+          <span class="face-stack">
+            <span class="avatar">满</span>
+            <span class="avatar">屿</span>
+            <span class="avatar">妈</span>
+            <span class="avatar">爸</span>
+          </span>
+          <span class="names">林小满、陈屿、妈妈、爸爸</span>
+          <span class="count">4 人</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 设计 ================= -->
+  <section class="design-section" id="design">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <div>
+          <div class="eyebrow">Design</div>
+          <h2>不做 SaaS，做一本手账。</h2>
+        </div>
+        <p>「家常手账 · 拾光」是栖迟的设计立场：纸白、墨色与赤陶，一像素细线，衬线标题。没有渐变、霓虹和彩色阴影，也不把每个区块都套进卡片里。</p>
+      </div>
+
+      <div class="design-grid">
+        <div class="principles reveal">
+          <div class="principle">
+            <b>01</b>
+            <div><h3>纸面感</h3><p>平面、暖白底、1px 细线。层级靠留白与线，不靠 elevation 和投影。</p></div>
+          </div>
+          <div class="principle">
+            <b>02</b>
+            <div><h3>手账感</h3><p>日期印章、小票明细、勾选纸、日记式时间轴——细节都从日常生活里来。</p></div>
+          </div>
+          <div class="principle">
+            <b>03</b>
+            <div><h3>克制</h3><p>主色只用于操作、选中与链接，整页占比不超过一成；一屏只有一个视觉重点。</p></div>
+          </div>
+        </div>
+
+        <div class="reveal">
+          <div class="palette">
+            <div class="swatch"><i style="background:#FAF5EE"></i><span>纸白 Paper</span><code>#FAF5EE</code></div>
+            <div class="swatch"><i style="background:#FFFCF7"></i><span>纸面 Surface</span><code>#FFFCF7</code></div>
+            <div class="swatch"><i style="background:#26201B"></i><span>墨 Ink</span><code>#26201B</code></div>
+            <div class="swatch"><i style="background:#7B6B5D"></i><span>淡墨 Muted</span><code>#7B6B5D</code></div>
+            <div class="swatch"><i style="background:#B45B3E"></i><span>赤陶 Accent</span><code>#B45B3E</code></div>
+            <div class="swatch"><i style="background:#6C8164"></i><span>苔绿 Olive</span><code>#6C8164</code></div>
+            <div class="swatch"><i style="background:#B3893F"></i><span>麦金 Gold</span><code>#B3893F</code></div>
+            <div class="swatch"><i style="background:#E7DACE"></i><span>细线 Line</span><code>#E7DACE</code></div>
+          </div>
+          <p class="palette-note">深色模式不是简单反色：赤陶降低饱和度，细线整体提亮。</p>
+
+          <div class="specimen">
+            <span class="receipt-label">Type specimen · 霞鹜文楷 / 系统无衬线</span>
+            <div class="big">一蔬一饭，皆是家书。</div>
+            <p>今天的汤炖了四十分钟，玉米的甜味都出来了。排骨先焯水，记得撇干净浮沫。</p>
+            <div class="small-line">
+              <span>约 30 分钟</span><span class="dot"></span><span>4 人份</span><span class="dot"></span><span>2026.11.13</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 上手 ================= -->
+  <section class="start-section" id="start">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <div>
+          <div class="eyebrow">Get started</div>
+          <h2>自己家的服务器，<br>自己家的数据。</h2>
+        </div>
+        <p>不需要域名、不需要备案，也不用把照片交给任何云服务。一台常开的小主机，一部手机，就可以开始。</p>
+      </div>
+
+      <div class="start-grid">
+        <div class="reveal">
+          <div class="steps">
+            <div class="step">
+              <span class="step-no">01</span>
+              <div>
+                <h3>起一台服务器</h3>
+                <p>需要 PocketBase 0.40+。把 <code>pb_migrations/</code> 与 <code>pb_hooks/</code> 放进项目根目录，<code>docker compose up -d</code> 就能启动。</p>
+              </div>
+            </div>
+            <div class="step">
+              <span class="step-no">02</span>
+              <div>
+                <h3>让家人连上来</h3>
+                <p>首次打开 App，填写 <code>局域网IP:8090</code> 并注册。第一个注册的账号会自动成为管理员。</p>
+              </div>
+            </div>
+            <div class="step">
+              <span class="step-no">03</span>
+              <div>
+                <h3>开始记事、点菜</h3>
+                <p>四个模块共享同一套数据。Android 手机装 APK，Windows 装桌面版；没网也能用，联网后自动同步。</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="code-card reveal">
+          <span class="receipt-label">Quick start · shell</span>
+<pre><code><span class="cm"># 后端：PocketBase 0.40+</span>
+docker compose up -d
+
+<span class="cm"># 客户端：Flutter</span>
+flutter pub get
+flutter run -d windows</code></pre>
+          <div class="code-foot">
+            <span>Android APK · Windows x64</span>
+            <a href="https://github.com/EmptyStars/Nestle#readme" target="_blank" rel="noopener">完整文档 ↗</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= FAQ ================= -->
+  <section class="faq-section" id="faq">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <div>
+          <div class="eyebrow">Questions</div>
+          <h2>一些常被问到的事。</h2>
+        </div>
+        <p>如果你也在找一个「数据不离开家」的家庭工具，下面这几条大概能帮你判断它是否合适。</p>
+      </div>
+
+      <div class="faq-list reveal">
+        <details>
+          <summary>一定要有公网或云服务器吗？</summary>
+          <p>不需要。整套系统只在你家局域网里跑，出门在外连不上，也不会把生活数据传到任何第三方。AI 导入需要调用 DeepSeek，是否配置由你决定。</p>
+        </details>
+        <details>
+          <summary>支持哪些设备？</summary>
+          <p>Android 手机（APK 侧载，minSdk 23）与 Windows 10/11 桌面版。目前不做 Web 与 iOS——浏览器扫不到局域网设备，手机端也以原生体验为先。</p>
+        </details>
+        <details>
+          <summary>AI 功能必须配置吗？</summary>
+          <p>可选。管理员在「家庭 → AI 设置」里填入 DeepSeek API Key 后，可以用文本、链接或图片导入食谱；不配置也能完整使用其他功能。</p>
+        </details>
+        <details>
+          <summary>数据存在哪里？</summary>
+          <p>后端数据在自家的 PocketBase（SQLite）里，由那台小主机保管。客户端有本地缓存，离线也能记录与浏览，联网后按队列自动同步。</p>
+        </details>
+        <details>
+          <summary>可以给别的家庭用吗？</summary>
+          <p>目前定位是「一个家庭、一台服务器」：不做多租户、不做支付、不接公网。代码开源，可以按自己家的习惯改。</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= CTA ================= -->
+  <section class="cta-section">
+    <div class="wrap">
+      <div class="cta-card reveal">
+        <div>
+          <div class="eyebrow">Open source · GitHub</div>
+          <h2>把这本手账，<br>搬回自己家。</h2>
+          <p>栖迟在 GitHub 上开源。拉下代码，起一台服务器，今晚就能把第一道菜写进去。</p>
+          <a class="btn primary" href="https://github.com/EmptyStars/Nestle" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2C6.48 2 2 6.58 2 12.26c0 4.5 2.87 8.32 6.84 9.67.5.09.68-.22.68-.48v-1.7c-2.78.62-3.37-1.37-3.37-1.37-.45-1.18-1.11-1.5-1.11-1.5-.91-.64.07-.62.07-.62 1 .07 1.53 1.06 1.53 1.06.89 1.56 2.34 1.11 2.91.85.09-.66.35-1.11.63-1.37-2.22-.26-4.56-1.14-4.56-5.07 0-1.12.39-2.03 1.03-2.75-.1-.26-.45-1.3.1-2.71 0 0 .84-.28 2.75 1.05a9.35 9.35 0 0 1 5 0c1.91-1.33 2.75-1.05 2.75-1.05.55 1.41.2 2.45.1 2.71.64.72 1.03 1.63 1.03 2.75 0 3.94-2.34 4.81-4.57 5.06.36.32.68.94.68 1.9v2.82c0 .27.18.58.69.48A10.01 10.01 0 0 0 22 12.26C22 6.58 17.52 2 12 2z"/></svg>
+            打开 GitHub 仓库
+          </a>
+        </div>
+        <div class="cta-seal" aria-hidden="true">
+          <span>开源</span>
+          <small>OPEN<br>SOURCE</small>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div class="foot-brand">
+        <span class="mark" aria-hidden="true">
+          <svg viewBox="0 0 32 32" fill="none">
+            <path d="M5 9h22" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>
+            <path d="M10 9v15M22 9v15" stroke="currentColor" stroke-width="2.2"/>
+            <path d="M12.5 16c0-1.2 1.6-2 3.5-2s3.5.8 3.5 2v3.4c0 1.2-1.6 2-3.5 2s-3.5-.8-3.5-2z" fill="var(--accent)" stroke="var(--accent)" stroke-width="1"/>
+            <path d="M16 12.5V14M16 21.4v2.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+        </span>
+        <div>
+          <span class="brand-text"><b>栖迟 Nestle</b></span>
+          <p>衡门之下，可以栖迟。一个家庭的食谱与备忘，留在自己家里。</p>
+        </div>
+      </div>
+
+      <div class="foot-col">
+        <h4>Links</h4>
+        <div class="foot-links">
+          <a href="https://github.com/EmptyStars/Nestle" target="_blank" rel="noopener">GitHub 仓库 <span class="ext">↗</span></a>
+          <a href="https://github.com/EmptyStars/Nestle/issues" target="_blank" rel="noopener">问题反馈 <span class="ext">↗</span></a>
+          <a href="../prototype/index.html" target="_blank" rel="noopener">UI 原型</a>
+        </div>
+      </div>
+
+      <div class="foot-col">
+        <h4>About</h4>
+        <div class="foot-links">
+          <a href="#features">功能</a>
+          <a href="#design">设计</a>
+          <a href="#start">上手</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="foot-bottom">
+      <span>© 2026 栖迟 Nestle · 自用项目，不做多租户、支付与公网服务</span>
+      <span>Built with Flutter &amp; PocketBase · v0.1.0</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var root = document.documentElement;
+  var btn = document.getElementById('themeBtn');
+  var meta = document.querySelector('meta[name="theme-color"]');
+
+  function syncTheme(){
+    var dark = root.getAttribute('data-nestle-theme') === 'dark';
+    btn.setAttribute('aria-pressed', dark ? 'true' : 'false');
+    btn.setAttribute('aria-label', dark ? '切换到浅色' : '切换到深色');
+    if (meta) meta.setAttribute('content', dark ? '#15120F' : '#FAF5EE');
+  }
+  syncTheme();
+
+  btn.addEventListener('click', function(){
+    var next = root.getAttribute('data-nestle-theme') === 'dark' ? 'light' : 'dark';
+    root.setAttribute('data-nestle-theme', next);
+    try { localStorage.setItem('nestle-theme', next); } catch (e) {}
+    syncTheme();
+  });
+
+  var items = document.querySelectorAll('.reveal');
+  if ('IntersectionObserver' in window && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){
+        if (entry.isIntersecting) {
+          entry.target.classList.add('in');
+          io.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+    items.forEach(function(el){ io.observe(el); });
+  } else {
+    items.forEach(function(el){ el.classList.add('in'); });
+  }
+})();
+</script>
+</body>
+</html>
